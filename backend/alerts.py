@@ -33,7 +33,7 @@ class AlertManager:
             status = detection.get("zone_status", "safe")
             previous_status = self._object_status.get(object_key)
 
-            should_log = (previous_status is None and status == "alert") or (
+            should_log = previous_status is None or (
                 previous_status is not None and previous_status != status
             )
 
@@ -80,3 +80,4 @@ class AlertManager:
 
     def total_count(self) -> int:
         return self._total
+

@@ -140,6 +140,18 @@ def get_user_session(uid: str) -> dict:
         return session
 
 
+def clear_user_session(uid: str) -> None:
+    with session_lock:
+        session = user_sessions.get(uid)
+
+    if not session:
+        return
+
+    stop_camera_thread(session)
+    with session_lock:
+        user_sessions.pop(uid, None)
+
+
 def normalize_points(points: list[list[int]]) -> list[list[int]]:
     return [[int(point[0]), int(point[1])] for point in points]
 
@@ -907,6 +919,12 @@ async def auth_session(current_user: dict = Depends(get_current_user)) -> dict:
     }
 
 
+@app.post("/auth/logout", tags=["Auth"])
+async def auth_logout(current_user: dict = Depends(get_current_user)) -> dict:
+    clear_user_session(current_user["uid"])
+    return {"status": "cleared"}
+
+
 @app.get("/auth/drive/connect", tags=["Auth"])
 async def drive_connect(request: Request, token: str = ""):
     """Redirect the user to Google's OAuth consent screen."""
@@ -1310,3 +1328,5 @@ async def get_status(current_user: dict = Depends(get_current_user)) -> dict:
         "preprocessing_enabled": PREPROCESSING_ENABLED,
         "last_error": camera_state["last_error"],
     }
+
+

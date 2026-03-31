@@ -2000,6 +2000,16 @@ function applySourceMode() {
 }
 
 async function handleSignOut() {
+  try {
+    await authApi("/auth/logout", { method: "POST" });
+  } catch {
+    // Continue with Firebase sign-out even if backend cleanup fails.
+  }
+
+  renderAlerts([]);
+  renderDetections([]);
+  setLive(false);
+
   if (auth) {
     await signOut(auth);
   }
@@ -2209,6 +2219,7 @@ try {
   showError(error.message);
   setNotice(error.message, "err");
 }
+
 
 
 
