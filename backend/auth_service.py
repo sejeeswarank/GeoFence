@@ -4,6 +4,7 @@ Firebase authentication helpers for backend token verification.
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 from typing import Optional
@@ -27,6 +28,45 @@ FIREBASE_WEB_CONFIG_KEYS = {
 
 class FirebaseConfigurationError(RuntimeError):
     """Raised when Firebase credentials are missing or invalid."""
+
+
+BACKEND_DIR = Path(__file__).resolve().parent
+
+
+def _parse_inline_json(candidate: str) -> Optional[dict]:
+    value = candidate.strip()
+    if not value.startswith("{"):
+        return None
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError as exc:
+        raise FirebaseConfigurationError(
+            "FIREBASE_ADMIN_CREDENTIALS contains invalid JSON."
+        ) from exc
+    return parsed if isinstance(parsed, dict) else None
+
+
+def _resolve_credentials_path(candidate: str) -> Optional[Path]:
+    value = candidate.strip()
+    if not value or value.startswith("{"):
+        return None
+    path = Path(value)
+    if not path.is_absolute():
+        path = (BACKEND_DIR / path).resolve()
+    return path if path.exists() else None
+
+
+def _get_admin_credentials_info() -> Optional[dict]:
+    candidates = [
+        os.getenv("FIREBASE_ADMIN_CREDENTIALS", ""),
+        os.getenv("GOOGLE_APPLICATION_CREDENTIALS", ""),
+    ]
+
+    for candidate in candidates:
+        parsed = _parse_inline_json(candidate)
+        if parsed:
+            return parsed
+    return None
 
 
 def get_firebase_web_config() -> dict:
@@ -54,10 +94,9 @@ def _get_admin_credentials_path() -> Optional[Path]:
     ]
 
     for candidate in candidates:
-        if candidate:
-            path = Path(candidate)
-            if path.exists():
-                return path
+        path = _resolve_credentials_path(candidate)
+        if path:
+            return path
     return None
 
 
@@ -65,6 +104,11 @@ def get_firebase_admin_app():
     try:
         return firebase_admin.get_app()
     except ValueError:
+        credentials_info = _get_admin_credentials_info()
+        if credentials_info:
+            credential = credentials.Certificate(credentials_info)
+            return firebase_admin.initialize_app(credential)
+
         credentials_path = _get_admin_credentials_path()
         if not credentials_path:
             raise FirebaseConfigurationError(
@@ -110,3 +154,5 @@ async def get_current_user(authorization: Optional[str] = Header(default=None)) 
         "name": decoded.get("name"),
         "email_verified": decoded.get("email_verified", False),
     }
+
+

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Google Drive-backed JSON persistence for authenticated users.
 """
 
@@ -28,12 +28,20 @@ class DriveConfigurationError(RuntimeError):
 class DriveStorage:
     def __init__(self) -> None:
         self.base_dir = Path(__file__).resolve().parent
-        self.credentials_file = self._resolve_path(
-            os.getenv("GOOGLE_DRIVE_OAUTH_CREDENTIALS_FILE", "google-drive-oauth-client.json")
-        )
-        self.legacy_token_file = self._resolve_path(
-            os.getenv("GOOGLE_DRIVE_TOKEN_FILE", "google-drive-token.json")
-        )
+        self.credentials_source = os.getenv(
+            "GOOGLE_DRIVE_OAUTH_CREDENTIALS_FILE",
+            "google-drive-oauth-client.json",
+        ).strip()
+        self.inline_credentials = self._parse_inline_json(self.credentials_source)
+        self.credentials_file = self._resolve_path(self.credentials_source)
+
+        self.legacy_token_source = os.getenv(
+            "GOOGLE_DRIVE_TOKEN_FILE",
+            "google-drive-token.json",
+        ).strip()
+        self.inline_legacy_token = self._parse_inline_json(self.legacy_token_source)
+        self.legacy_token_file = self._resolve_path(self.legacy_token_source)
+
         self.token_dir = self._resolve_path(
             os.getenv("GOOGLE_DRIVE_TOKEN_DIR", str(self.base_dir / "drive_tokens"))
         )
@@ -43,6 +51,19 @@ class DriveStorage:
         return path if path.is_absolute() else (self.base_dir / path).resolve()
 
     @staticmethod
+    def _parse_inline_json(value: str) -> Optional[dict]:
+        candidate = value.strip()
+        if not candidate.startswith("{"):
+            return None
+        try:
+            parsed = json.loads(candidate)
+        except json.JSONDecodeError as exc:
+            raise DriveConfigurationError(
+                "Google Drive credentials in .env contain invalid JSON."
+            ) from exc
+        return parsed if isinstance(parsed, dict) else None
+
+    @staticmethod
     def _safe_uid(uid: str) -> str:
         return "".join(char if char.isalnum() or char in ("-", "_") else "_" for char in uid).strip("_") or "user"
 
@@ -50,10 +71,10 @@ class DriveStorage:
         return self.token_dir / f"{self._safe_uid(uid)}.json"
 
     def status(self, uid: str) -> dict:
-        has_credentials = self.credentials_file.exists()
+        has_credentials = self.inline_credentials is not None or self.credentials_file.exists()
         token_file = self._token_file_for_uid(uid)
         has_token = has_credentials and token_file.exists()
-        has_legacy_token = has_credentials and self.legacy_token_file.exists()
+        has_legacy_token = self.inline_legacy_token is not None or (has_credentials and self.legacy_token_file.exists())
         if has_token:
             message = "Google Drive is ready for this user."
         elif has_legacy_token:
@@ -65,8 +86,8 @@ class DriveStorage:
         return {
             "configured": has_token,
             "has_credentials": has_credentials,
-            "credentials_file": self.credentials_file.name,
-            "token_file": token_file.name,
+            "credentials_file": ".env inline JSON" if self.inline_credentials is not None else self.credentials_file.name,
+            "token_file": ".env inline JSON" if self.inline_legacy_token is not None else token_file.name,
             "token_directory": str(self.token_dir),
             "legacy_token_detected": has_legacy_token,
             "message": message,
@@ -74,15 +95,22 @@ class DriveStorage:
 
     def build_auth_url(self, redirect_uri: str, state: str) -> tuple[str, str]:
         """Build a Google OAuth consent URL for the browser flow."""
-        if not self.credentials_file.exists():
+        if self.inline_credentials is not None:
+            flow = Flow.from_client_config(
+                self.inline_credentials,
+                scopes=DRIVE_SCOPES,
+                redirect_uri=redirect_uri,
+            )
+        elif self.credentials_file.exists():
+            flow = Flow.from_client_secrets_file(
+                str(self.credentials_file),
+                scopes=DRIVE_SCOPES,
+                redirect_uri=redirect_uri,
+            )
+        else:
             raise DriveConfigurationError(
                 "Missing Google Drive OAuth client file. Upload it before connecting."
             )
-        flow = Flow.from_client_secrets_file(
-            str(self.credentials_file),
-            scopes=DRIVE_SCOPES,
-            redirect_uri=redirect_uri,
-        )
         code_verifier = secrets.token_urlsafe(72)
         flow.code_verifier = code_verifier
         auth_url, _ = flow.authorization_url(
@@ -94,15 +122,22 @@ class DriveStorage:
 
     def exchange_code(self, code: str, redirect_uri: str, uid: str, code_verifier: str) -> None:
         """Exchange the OAuth authorization code for tokens and save them."""
-        if not self.credentials_file.exists():
+        if self.inline_credentials is not None:
+            flow = Flow.from_client_config(
+                self.inline_credentials,
+                scopes=DRIVE_SCOPES,
+                redirect_uri=redirect_uri,
+            )
+        elif self.credentials_file.exists():
+            flow = Flow.from_client_secrets_file(
+                str(self.credentials_file),
+                scopes=DRIVE_SCOPES,
+                redirect_uri=redirect_uri,
+            )
+        else:
             raise DriveConfigurationError(
                 "Missing Google Drive OAuth client file."
             )
-        flow = Flow.from_client_secrets_file(
-            str(self.credentials_file),
-            scopes=DRIVE_SCOPES,
-            redirect_uri=redirect_uri,
-        )
         flow.code_verifier = code_verifier
         try:
             flow.fetch_token(code=code)
@@ -114,14 +149,14 @@ class DriveStorage:
         token_file.write_text(credentials.to_json(), encoding="utf-8")
 
     def _load_credentials(self, uid: str) -> Credentials:
-        if not self.credentials_file.exists():
+        if self.inline_credentials is None and not self.credentials_file.exists():
             raise DriveConfigurationError(
                 f"Missing Google Drive OAuth credentials file: {self.credentials_file}"
             )
 
         token_file = self._token_file_for_uid(uid)
         if not token_file.exists():
-            if self.legacy_token_file.exists():
+            if self.inline_legacy_token is not None or self.legacy_token_file.exists():
                 raise DriveConfigurationError(
                     "A legacy shared Drive token was found, but this user has not connected their own Drive yet. "
                     "Use Connect to Drive from the Account page."
@@ -207,5 +242,8 @@ class DriveStorage:
 
         buffer.seek(0)
         return json.loads(buffer.read().decode("utf-8"))
+
+
+
 
 
