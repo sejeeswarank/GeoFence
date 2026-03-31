@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GeoFence Login</title>
+<link rel="icon" type="image/png" href="/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EAF0F6;
+    --heroTop:#0A1930;
+    --heroBottom:#173C6E;
+    --panel:#FFFFFF;
+    --border:#D9E2EC;
+    --text:#1B2A3D;
+    --muted:#71859A;
+    --accent:#2F5ED8;
+    --accentHover:#274EC5;
+    --sidebarText:#E6EEF5;
+    --danger:#C73A2B;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{
+    min-height:100vh;
+    font-family:"Inter",system-ui,-apple-system,sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(circle at 24px 24px,rgba(255,255,255,.04) 2px,transparent 0),
+      linear-gradient(135deg,var(--heroTop) 0%,var(--heroBottom) 100%);
+    background-size:96px 96px,100% 100%;
+  }
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .shell{
+    min-height:100vh;
+    width:min(1120px,100%);
+    margin:0 auto;
+    padding:40px 24px;
+    display:grid;
+    grid-template-columns:minmax(320px,1fr) minmax(360px,460px);
+    gap:28px;
+    align-items:center;
+  }
+  .brandPanel{
+    color:var(--sidebarText);
+    padding:32px 24px 32px 8px;
+  }
+  .brandRow{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:28px;
+  }
+  .brandLogo{
+    width:52px;
+    height:52px;
+    border-radius:12px;
+    object-fit:cover;
+    box-shadow:0 8px 24px rgba(0,0,0,.14);
+  }
+  .brandTitle{
+    font-size:1.8rem;
+    font-weight:800;
+    letter-spacing:-.03em;
+  }
+  .brandCopy{
+    max-width:520px;
+  }
+  .eyebrow{
+    color:#AFC4DA;
+    font-size:.75rem;
+    font-weight:700;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  .brandCopy h1{
+    font-size:3rem;
+    line-height:1.05;
+    letter-spacing:-.05em;
+    margin-bottom:14px;
+  }
+  .brandCopy p{
+    color:#D6E1EC;
+    max-width:520px;
+    font-size:1rem;
+    line-height:1.7;
+  }
+  .featureRow{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:24px;
+  }
+  .featureChip{
+    padding:10px 14px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.08);
+    color:#F4F8FC;
+    font-size:.84rem;
+    font-weight:600;
+  }
+  .authCard{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:30px;
+    box-shadow:0 12px 40px rgba(15,34,61,.12);
+  }
+  .authCard h2{
+    margin-top:6px;
+    font-size:2rem;
+    line-height:1.1;
+    letter-spacing:-.04em;
+  }
+  .authCard p{
+    margin-top:10px;
+    color:var(--muted);
+    line-height:1.6;
+  }
+  form{
+    display:grid;
+    gap:14px;
+    margin-top:24px;
+  }
+  label{
+    display:grid;
+    gap:7px;
+    color:#73879C;
+    font-size:.76rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+  }
+  input{
+    width:100%;
+    padding:14px 15px;
+    border-radius:12px;
+    border:1px solid #C8D4E2;
+    background:#FDFEFF;
+    color:var(--text);
+    font:500 .96rem "Inter",sans-serif;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  input:focus{
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(47,94,216,.12);
+  }
+  button{
+    margin-top:4px;
+    padding:14px 18px;
+    border:none;
+    border-radius:12px;
+    background:var(--accent);
+    color:#fff;
+    font:700 .96rem "Inter",sans-serif;
+    cursor:pointer;
+    transition:background .15s ease, transform .15s ease;
+  }
+  button:hover:not(:disabled){background:var(--accentHover)}
+  button:active:not(:disabled){transform:translateY(1px)}
+  button:disabled{opacity:.6;cursor:not-allowed}
+  .msg{
+    min-height:24px;
+    margin-top:14px;
+    font-size:.92rem;
+    font-weight:600;
+  }
+  .msg.err{color:var(--danger)}
+  .msg.ok{color:var(--accent)}
+  .authFooter{
+    margin-top:18px;
+    color:var(--muted);
+    font-size:.94rem;
+  }
+  @media (max-width:900px){
+    .shell{
+      grid-template-columns:1fr;
+      padding:22px 16px 32px;
+      gap:18px;
+    }
+    .brandPanel{
+      padding:8px 4px 0;
+    }
+    .brandCopy h1{
+      font-size:2.2rem;
+    }
+    .authCard{
+      padding:24px 20px;
+    }
+  }
+</style>
+</head>
+<body>
+<main class="shell">
+  <section class="brandPanel">
+    <div class="brandRow">
+      <img class="brandLogo" src="/logo.png" alt="GV">
+      <div class="brandTitle">GeoFence</div>
+    </div>
+    <div class="brandCopy">
+      <div class="eyebrow">Monitoring Platform</div>
+      <h1>Secure access to your surveillance dashboard.</h1>
+      <p>Sign in to manage cameras, configure geo-fence zones, and keep your monitoring workspace in sync.</p>
+      <div class="featureRow">
+        <div class="featureChip">Live camera control</div>
+        <div class="featureChip">Per-camera zones</div>
+        <div class="featureChip">Drive backup</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="authCard">
+    <div class="eyebrow">Sign In</div>
+    <h2>Welcome back</h2>
+    <p>Use your Firebase account to open the GeoFence dashboard.</p>
+
+    <form id="loginForm">
+      <label>Email
+        <input id="email" type="email" required>
+      </label>
+      <label>Password
+        <input id="password" type="password" required>
+      </label>
+      <button id="submitBtn" type="submit">Log In</button>
+    </form>
+
+    <div id="msg" class="msg"></div>
+    <div class="authFooter">Need an account? <a href="/register">Create one</a></div>
+  </section>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+
+const form = document.getElementById("loginForm");
+const msg = document.getElementById("msg");
+const submitBtn = document.getElementById("submitBtn");
+
+const setMsg = (text, cls = "") => {
+  msg.textContent = text;
+  msg.className = `msg ${cls}`.trim();
+};
+
+async function initAuth() {
+  const response = await fetch("/auth/firebase-config");
+  const payload = await response.json();
+  if (!payload.configured) {
+    throw new Error(payload.message || "Firebase not configured.");
+  }
+  return getAuth(initializeApp(payload.config));
+}
+
+let auth;
+
+try {
+  auth = await initAuth();
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      globalThis.location.replace("/app");
+    }
+  });
+} catch (error) {
+  setMsg(error.message, "err");
+  submitBtn.disabled = true;
+}
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!auth) {
+    return;
+  }
+
+  setMsg("Signing in...", "ok");
+  submitBtn.disabled = true;
+
+  try {
+    await signInWithEmailAndPassword(
+      auth,
+      document.getElementById("email").value.trim(),
+      document.getElementById("password").value,
+    );
+    globalThis.location.replace("/app");
+  } catch (error) {
+    setMsg(error.message, "err");
+    submitBtn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

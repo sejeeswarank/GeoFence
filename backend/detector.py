@@ -7,7 +7,7 @@ from __future__ import annotations
 from ultralytics import YOLO
 import numpy as np
 
-from config import CONFIDENCE_THRESHOLD, TARGET_CLASSES, YOLO_MODEL
+from config import CONFIDENCE_THRESHOLD, TARGET_CLASSES, YOLO_IMAGE_SIZE, YOLO_MODEL
 
 
 class ObjectDetector:
@@ -18,7 +18,7 @@ class ObjectDetector:
         print(f"[Detector] Tracking classes: {sorted(self.target_classes) or 'ALL'}")
 
     def detect(self, frame: np.ndarray) -> list[dict]:
-        results = self.model(frame, verbose=False)[0]
+        results = self.model(frame, verbose=False, conf=CONFIDENCE_THRESHOLD, imgsz=YOLO_IMAGE_SIZE)[0]
         detections: list[dict] = []
 
         for box in results.boxes:
@@ -47,3 +47,4 @@ class ObjectDetector:
             )
 
         return detections
+

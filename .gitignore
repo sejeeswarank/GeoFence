@@ -15,3 +15,4 @@ Thumbs.db
 firebase-admin.json
 google-drive-oauth-client.json
 google-drive-token.json
+drive_tokens/

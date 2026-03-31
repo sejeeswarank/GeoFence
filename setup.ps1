@@ -5,6 +5,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-Location -Path $PSScriptRoot
+$requirementsFile = Join-Path $PSScriptRoot "backend\requirements.txt"
 
 function Get-PythonRuntime {
     $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
@@ -76,8 +77,8 @@ if (-not $SkipPipUpgrade) {
     & $venvPython -m pip install --upgrade pip
 }
 
-Write-Host "Installing dependencies from requirements.txt..." -ForegroundColor Cyan
-& $venvPython -m pip install -r requirements.txt
+Write-Host "Installing dependencies from backend\\requirements.txt..." -ForegroundColor Cyan
+& $venvPython -m pip install -r $requirementsFile
 
 Write-Host ""
 Write-Host "Setup complete." -ForegroundColor Green

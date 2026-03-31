@@ -6,9 +6,11 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-Set-Location -Path $PSScriptRoot
+$projectRoot = $PSScriptRoot
+$backendRoot = Join-Path $projectRoot "backend"
+Set-Location -Path $backendRoot
 
-$venvPython = Join-Path $PSScriptRoot ".venv\Scripts\python.exe"
+$venvPython = Join-Path $projectRoot ".venv\Scripts\python.exe"
 if (-not (Test-Path $venvPython)) {
     Write-Host "No virtual environment found at .venv" -ForegroundColor Yellow
     Write-Host "Run .\setup.ps1 first." -ForegroundColor Yellow

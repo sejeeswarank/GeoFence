@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeoFence</title>
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #EAF0F6;
+      --sidebar: #0A1930;
+      --hero: #0D213F;
+      --panel: #FFFFFF;
+      --border: #D9E2EC;
+      --text: #1B2A3D;
+      --textSoft: #3A506B;
+      --muted: #7B8FA3;
+      --accent: #2F5ED8;
+      --accentHover: #274EC5;
+      --accentLight: rgba(47, 94, 216, .08);
+      --accentGlow: rgba(47, 94, 216, .18);
+      --warn: #D93025;
+      --warnHover: #C12B20;
+      --safe: #1E8E3E;
+      --sidebarText: #E6EEF5;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 24px 24px, rgba(255, 255, 255, .025) 2px, transparent 0),
+        radial-gradient(circle at 72px 72px, rgba(255, 255, 255, .02) 2px, transparent 0),
+        linear-gradient(180deg, var(--hero) 0 285px, var(--bg) 285px 100%);
+      background-size: 96px 96px, 96px 96px, 100% 100%;
+      color: var(--text);
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font-family: inherit;
+      font-size: inherit
+    }
+
+    [hidden] {
+      display: none !important
+    }
+
+    /* ── Shell ── */
+    .appShell {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh
+    }
+
+    /* ── Navbar ── */
+    .sidebar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      padding: 0 32px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: end;
+      gap: 28px;
+      background: rgba(12, 36, 70, .6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      color: var(--sidebarText);
+    }
+
+    .brand {
+      padding: 14px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .brandLogo {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      object-fit: cover;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .12);
+    }
+
+    .brand h1 {
+      font-size: 1rem;
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: -.02em
+    }
+
+    .navList {
+      display: flex;
+      align-items: stretch;
+      gap: 4px
+    }
+
+    .navButton {
+      padding: 16px 14px 14px;
+      border-radius: 0;
+      border: none;
+      background: transparent;
+      color: rgba(255, 255, 255, .65);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      position: relative;
+      font-weight: 500;
+      font-size: .875rem;
+      transition: color .15s ease;
+    }
+
+    .navButton:hover {
+      color: #fff
+    }
+
+    .navButton.active {
+      color: #fff
+    }
+
+    .navButton.active::after {
+      content: "";
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 0;
+      height: 2.5px;
+      border-radius: 2px;
+      background: #fff;
+    }
+
+    .navEmoji {
+      display: none
+    }
+
+    .navCopy {
+      display: block;
+      text-align: left
+    }
+
+    .navTitle {
+      font-weight: 600;
+      font-size: .875rem
+    }
+
+    .navMeta {
+      display: none
+    }
+
+    .topActions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 12px
+    }
+
+    .profileButton {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px 5px 5px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, .15);
+      background: rgba(255, 255, 255, .08);
+      color: #fff;
+      font-weight: 500;
+      font-size: .85rem;
+      cursor: pointer;
+      transition: background .15s ease;
+    }
+
+    .profileButton:hover {
+      background: rgba(255, 255, 255, .15)
+    }
+
+    .profileAvatar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      background: var(--accent);
+      font-weight: 700;
+      color: #fff;
+      font-size: .75rem;
+      flex-shrink: 0;
+    }
+
+    .profileName {
+      font-weight: 600;
+      font-size: .83rem;
+      color: #fff;
+      max-width: 110px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .profileChevron {
+      width: 14px;
+      height: 14px;
+      opacity: .65;
+      flex-shrink: 0
+    }
+
+    /* ── Workspace ── */
+    .workspace {
+      width: min(1120px, 100%);
+      padding: 28px 32px 48px;
+      margin: 0 auto;
+      display: grid
+    }
+
+    .pageView {
+      display: none;
+      animation: pageIn .22s ease
+    }
+
+    .pageView.active {
+      display: grid;
+      gap: 20px
+    }
+
+    @keyframes pageIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    /* ── Page Header ── */
+    .pageIntro {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start
+    }
+
+    .pageIntro .eyebrow {
+      color: #A8BFD5;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-size: .7rem
+    }
+
+    .pageIntro .pageTitle {
+      color: #fff;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, .1)
+    }
+
+    .pageTitle {
+      margin: 6px 0 0;
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: -.03em;
+      line-height: 1.2
+    }
+
+    .heroControls {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px
+    }
+
+    .heroControls.savedLayout {
+      align-items: stretch
+    }
+
+    .heroPicker {
+      min-width: 240px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(255, 255, 255, .08);
+    }
+
+    .heroPicker label {
+      display: block;
+      margin-bottom: 8px;
+      color: #DCE6F1;
+      font-family: "Inter", "Segoe UI", sans-serif;
+      font-size: .72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .heroPicker select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, .15);
+      background: #F8FBFE;
+      color: var(--text);
+    }
+
+    .savedDock {
+      min-width: 290px;
+      max-width: 420px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(255, 255, 255, .08);
+    }
+
+    .savedDockLabel {
+      display: block;
+      margin-bottom: 8px;
+      color: #DCE6F1;
+      font-size: .72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .savedCameraList {
+      display: grid;
+      gap: 8px;
+      max-height: 164px;
+      overflow: auto;
+      padding-right: 2px
+    }
+
+    .savedCameraRow {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .savedCameraItem {
+      width: 100%;
+      text-align: left;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, .14);
+      background: rgba(255, 255, 255, .07);
+      color: #F8FBFE;
+    }
+
+    .savedCameraItem:hover:not(:disabled) {
+      background: rgba(255, 255, 255, .12)
+    }
+
+    .savedCameraItem.active {
+      border-color: rgba(255, 255, 255, .42);
+      background: rgba(255, 255, 255, .18);
+    }
+
+    .savedCameraName {
+      display: block;
+      font-weight: 700;
+      font-size: .88rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .savedCameraMeta {
+      display: block;
+      margin-top: 3px;
+      color: #D6E1EC;
+      font-size: .74rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .savedCameraDelete {
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, .18);
+      background: rgba(255, 255, 255, .08);
+      color: #fff;
+      display: grid;
+      place-items: center;
+    }
+
+    .savedCameraDelete:hover:not(:disabled) {
+      background: rgba(255, 255, 255, .16)
+    }
+
+    .savedCameraDelete svg {
+      width: 15px;
+      height: 15px;
+      stroke-width: 2
+    }
+
+    .savedCameraEmpty {
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px dashed rgba(255, 255, 255, .16);
+      color: #DCE6F1;
+      font-size: .8rem;
+      text-align: center;
+    }
+
+    /* ── Eyebrow & Labels ── */
+    .eyebrow {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+    }
+
+    .mono {
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      font-size: .8rem;
+      color: var(--muted)
+    }
+
+    label {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    /* ── Panels ── */
+    .panel,
+    .metricCard {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 6px 20px rgba(12, 38, 63, .06);
+    }
+
+    .panel {
+      overflow: hidden
+    }
+
+    .head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 18px 22px 14px
+    }
+
+    .body {
+      padding: 0 22px 22px
+    }
+
+    .sectionTitle {
+      margin: 5px 0 0;
+      font-size: 1.02rem;
+      font-weight: 700;
+      letter-spacing: -.015em;
+      color: var(--text)
+    }
+
+    .sectionWithIcon {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px
+    }
+
+    .sectionWithIcon svg {
+      width: 15px;
+      height: 15px;
+      color: var(--accent);
+      stroke-width: 2;
+      opacity: .75
+    }
+
+    /* ── Metrics ── */
+    .statusStrip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px
+    }
+
+    .metricCard {
+      padding: 18px 20px
+    }
+
+    .metricLabel {
+      display: block;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: .68rem;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+    }
+
+    .metricValue {
+      margin-top: 8px;
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -.03em;
+      color: var(--text)
+    }
+
+    .status {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: .85rem
+    }
+
+    .status.live {
+      color: var(--safe)
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 5px currentColor
+    }
+
+    /* ── Grids ── */
+    .contentGrid {
+      display: grid;
+      gap: 18px
+    }
+
+    .homeGrid {
+      grid-template-columns: minmax(0, 1.45fr) minmax(320px, .9fr)
+    }
+
+    .cameraGrid {
+      grid-template-columns: minmax(0, 1.4fr) minmax(320px, .92fr)
+    }
+
+    .cameraEmptyState {
+      max-width: 760px;
+      margin: 10px auto 0;
+    }
+
+    .cameraEmptyBody {
+      min-height: 320px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 14px;
+      padding: 42px 32px;
+    }
+
+    .cameraEmptyIcon {
+      width: 62px;
+      height: 62px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: var(--accentLight);
+      color: var(--accent);
+      margin: 0 auto;
+    }
+
+    .cameraEmptyIcon svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .cameraEmptyTitle {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .cameraEmptyCopy {
+      max-width: 540px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .cameraEmptyControls {
+      justify-content: center;
+    }
+
+    .homeToolbar {
+      display: grid;
+      grid-template-columns: minmax(240px, 320px) minmax(240px, 1fr);
+      gap: 14px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .homeToolbarCard {
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(255, 255, 255, .08);
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: #fff;
+    }
+
+    .homeToolbarCard label {
+      display: block;
+      margin-bottom: 8px;
+      color: #DCE6F1;
+    }
+
+    .homeToolbarCard select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, .15);
+      background: #F8FBFE;
+      color: var(--text);
+    }
+
+    .homeActiveLabel {
+      display: block;
+      color: #DCE6F1;
+      font-size: .72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .homeActiveName {
+      margin-top: 6px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .homeActiveMeta {
+      margin-top: 4px;
+      color: #D6E1EC;
+      font-size: .82rem;
+    }
+
+    .savedPageHeader {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .savedCards {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+
+    .savedCameraCard {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel);
+      box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 6px 20px rgba(12,38,63,.06);
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow .2s ease, border-color .2s ease, transform .15s ease;
+      overflow: hidden;
+    }
+
+    .savedCameraCard:hover {
+      box-shadow: 0 4px 14px rgba(12,38,63,.1), 0 8px 28px rgba(12,38,63,.08);
+      transform: translateY(-2px);
+    }
+
+    .savedCameraCard.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(47,94,216,.12), 0 6px 20px rgba(12,38,63,.08);
+    }
+
+    .savedCardHeader {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 20px 14px;
+    }
+
+    .savedCardIcon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #EBF0FA 0%, #D6E2F5 100%);
+      color: var(--accent);
+    }
+
+    .savedCameraCard.active .savedCardIcon {
+      background: linear-gradient(135deg, var(--accent) 0%, #4B7AE8 100%);
+      color: #fff;
+    }
+
+    .savedCardIcon svg {
+      width: 22px;
+      height: 22px;
+      stroke-width: 1.8;
+    }
+
+    .savedCardInfo {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .savedCameraCardTitle {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .savedCameraCardMeta {
+      color: var(--muted);
+      font-size: .82rem;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .savedCardBadge {
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      flex-shrink: 0;
+      background: #EFF3FA;
+      color: var(--muted);
+    }
+
+    .savedCameraCard.active .savedCardBadge {
+      background: rgba(47,94,216,.1);
+      color: var(--accent);
+    }
+
+    .savedCardDetails {
+      padding: 0 20px 6px;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .savedCardDetail {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    .savedCardDetail svg {
+      width: 14px;
+      height: 14px;
+      stroke-width: 2;
+      opacity: .6;
+    }
+
+    .savedCameraCardActions {
+      display: flex;
+      gap: 8px;
+      padding: 12px 20px 18px;
+      margin-top: auto;
+    }
+
+    .savedCameraCardActions .primary {
+      flex: 1;
+      padding: 9px 14px;
+      font-size: .84rem;
+    }
+
+    .savedCameraCard .savedCameraDelete {
+      background: #fff;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 9px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .15s ease, color .15s ease, border-color .15s ease;
+    }
+
+    .savedCameraCard .savedCameraDelete:hover {
+      background: #FFF1F0;
+      color: #C73A2B;
+      border-color: #E8BAB5;
+    }
+
+    .savedCameraCard .savedCameraDelete svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .savedCards .savedCameraEmpty {
+      background: var(--panel);
+      color: var(--muted);
+      border: 2px dashed var(--border);
+      border-radius: 14px;
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 24px;
+      text-align: center;
+      font-size: .92rem;
+      line-height: 1.5;
+    }
+
+    .savedCameraEmptyIcon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: #EBF0FA;
+      color: var(--accent);
+      display: grid;
+      place-items: center;
+      margin-bottom: 4px;
+    }
+
+    .savedCameraEmptyIcon svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px
+    }
+
+    /* ── Video ── */
+    .video {
+      position: relative;
+      aspect-ratio: 4/3;
+      border-radius: 10px;
+      background: #F0F4F9;
+      overflow: hidden;
+      border: 1px solid #DCE4EE;
+    }
+
+    .video img,
+    .video canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%
+    }
+
+    .video img {
+      display: none;
+      object-fit: contain
+    }
+
+    #zoneCanvas {
+      display: none;
+      cursor: crosshair
+    }
+
+    .placeholder {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      padding: 24px
+    }
+
+    .placeholder strong {
+      display: block;
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px
+    }
+
+    .placeholder div {
+      font-size: .85rem;
+      color: var(--muted)
+    }
+
+    .hint,
+    .error {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: .78rem;
+      font-weight: 500;
+    }
+
+    .hint {
+      display: none;
+      background: rgba(47, 94, 216, .06);
+      color: var(--accent);
+      border: 1px solid rgba(47, 94, 216, .18)
+    }
+
+    .error {
+      display: none;
+      background: #FEF2F1;
+      color: #B83121;
+      border: 1px solid rgba(217, 48, 37, .18)
+    }
+
+    /* ── Form Controls ── */
+    .fieldRow,
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: end
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      flex: 1 1 220px
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      padding: 10px 13px;
+      border-radius: 8px;
+      border: 1px solid #CBD5E1;
+      background: #fff;
+      color: var(--text);
+      font-size: .875rem;
+      font-weight: 400;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accentGlow);
+    }
+
+    .field input::placeholder,
+    .field textarea::placeholder {
+      color: #A3B1C2;
+      font-weight: 400
+    }
+
+    .field input[readonly] {
+      color: var(--textSoft);
+      background: #F6F8FB;
+      cursor: default
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      font-size: .8rem;
+      line-height: 1.6
+    }
+
+    /* ── Buttons ── */
+    button {
+      padding: 9px 18px;
+      border-radius: 8px;
+      border: 1px solid #CBD5E1;
+      background: #fff;
+      color: var(--textSoft);
+      font-weight: 600;
+      font-size: .825rem;
+      cursor: pointer;
+      letter-spacing: -.005em;
+      transition: all .15s ease;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: #A8B8CC;
+      background: #F8FAFC;
+      color: var(--text)
+    }
+
+    button:active:not(:disabled) {
+      transform: scale(.98)
+    }
+
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: #fff;
+      border: 1px solid var(--accent);
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(47, 94, 216, .25);
+    }
+
+    button.primary:hover:not(:disabled) {
+      background: var(--accentHover);
+      border-color: var(--accentHover);
+      box-shadow: 0 2px 8px rgba(47, 94, 216, .3)
+    }
+
+    button.warn {
+      background: var(--warn);
+      color: #fff;
+      border: 1px solid var(--warn);
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(217, 48, 37, .2);
+    }
+
+    button.warn:hover:not(:disabled) {
+      background: var(--warnHover);
+      border-color: var(--warnHover);
+      box-shadow: 0 2px 8px rgba(217, 48, 37, .25)
+    }
+
+    /* ── State Cards ── */
+    .state,
+    .notice,
+    .item,
+    .empty {
+      padding: 12px 16px;
+      border-radius: 8px;
+      background: #F6F8FB;
+      border: 1px solid #E2E8F0;
+      font-size: .85rem;
+      font-weight: 500;
+      color: var(--textSoft);
+    }
+
+    .state.ok,
+    .notice.ok {
+      color: var(--accent);
+      border-color: rgba(47, 94, 216, .25);
+      background: var(--accentLight)
+    }
+
+    .notice.err {
+      color: var(--warn);
+      border-color: rgba(217, 48, 37, .2);
+      background: #FEF2F1
+    }
+
+    /* ── Detection Items ── */
+    .list {
+      display: grid;
+      gap: 8px
+    }
+
+    .itemTop {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center
+    }
+
+    .item {
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: #F9FAFB;
+      border: 1px solid #E8EDF2
+    }
+
+    .item strong {
+      font-weight: 700;
+      font-size: .85rem
+    }
+
+    .pill {
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: .65rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .pill.safe {
+      background: rgba(30, 142, 62, .1);
+      color: var(--safe)
+    }
+
+    .pill.alert {
+      background: rgba(217, 48, 37, .1);
+      color: var(--warn)
+    }
+
+    .pill.neutral {
+      background: rgba(47, 94, 216, .1);
+      color: var(--accent)
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      font-weight: 500;
+      font-size: .85rem
+    }
+
+    /* ── Account Grid ── */
+    .accountGrid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px
+    }
+
+    /* ── Drive Connect Link ── */
+    .driveConnectLink {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 20px;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      font-size: .85rem;
+      text-decoration: none;
+      border: 1px solid var(--accent);
+      box-shadow: 0 1px 3px rgba(47, 94, 216, .25);
+      transition: all .15s ease;
+    }
+
+    .driveConnectLink:hover {
+      background: var(--accentHover);
+      box-shadow: 0 2px 8px rgba(47, 94, 216, .3)
+    }
+
+    /* ── Responsive ── */
+    @media(max-width:1180px) {
+      .sidebar {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 10px 18px 0
+      }
+
+      .navList {
+        flex-wrap: wrap;
+        gap: 4px
+      }
+
+      .topActions {
+        padding-bottom: 10px
+      }
+
+      .workspace {
+        padding: 18px
+      }
+
+      .homeGrid,
+      .cameraGrid,
+      .accountGrid {
+        grid-template-columns: 1fr
+      }
+
+      .statusStrip {
+        grid-template-columns: 1fr
+      }
+    }
+
+    @media(max-width:760px) {
+      .topActions {
+        flex-wrap: wrap
+      }
+
+      .pageIntro {
+        flex-direction: column
+      }
+
+      .homeToolbar,
+      .savedPageHeader {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+      }
+
+      .workspace {
+        padding: 14px
+      }
+
+      .body {
+        padding: 0 16px 16px
+      }
+
+      .head {
+        padding: 14px 16px 12px
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="appShell">
+    <header class="sidebar">
+      <div class="brand">
+        <img class="brandLogo" src="/logo.png" alt="GV">
+        <h1>GeoFence</h1>
+      </div>
+
+      <nav class="navList">
+        <button id="navHome" class="navButton active" type="button">
+          <span class="navEmoji"><i data-lucide="home"></i></span>
+          <span class="navCopy"><span class="navTitle">Home</span><span class="navMeta">Realtime dashboard</span></span>
+        </button>
+        <button id="navSavedCameras" class="navButton" type="button">
+          <span class="navEmoji"><i data-lucide="camera"></i></span>
+          <span class="navCopy"><span class="navTitle">Saved Cameras</span><span class="navMeta">Manage camera cards</span></span>
+        </button>
+        <button id="navUploadVideo" class="navButton" type="button">
+          <span class="navEmoji"><i data-lucide="upload"></i></span>
+          <span class="navCopy"><span class="navTitle">Upload Video</span><span class="navMeta">Analyze recorded clips</span></span>
+        </button>
+        <button id="navAccount" class="navButton" type="button">
+          <span class="navEmoji"><i data-lucide="user"></i></span>
+          <span class="navCopy"><span class="navTitle">Account</span><span class="navMeta">Auth and Drive</span></span>
+        </button>
+      </nav>
+
+      <div class="topActions">
+        <button id="btnSidebarSignOut" class="profileButton" type="button">
+          <span class="profileAvatar" id="navAvatar">U</span>
+          <span class="profileName" id="navDisplayName">Account</span>
+          <svg class="profileChevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 6 8 10 12 6" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section id="pageHome" class="pageView active">
+        <div class="pageIntro">
+          <div>
+            <div class="eyebrow">Home</div>
+            <h2 class="pageTitle">Real-Time Monitoring Dashboard</h2>
+          </div>
+        </div>
+
+        <div class="homeToolbar">
+          <div class="homeToolbarCard">
+            <label for="homeCameraSelect">Select Camera</label>
+            <select id="homeCameraSelect"></select>
+          </div>
+          <div class="homeToolbarCard">
+            <span class="homeActiveLabel">Active Camera</span>
+            <div id="homeActiveCameraName" class="homeActiveName">No camera selected</div>
+            <div id="homeActiveCameraInfo" class="homeActiveMeta">No cameras added. Go to Saved Cameras to add one.</div>
+          </div>
+        </div>
+
+        <div class="statusStrip">
+          <div class="metricCard">
+            <span class="metricLabel">System State</span>
+            <div id="statusPill" class="status" style="margin-top:10px"><span class="dot"></span><span
+                id="statusText">OFFLINE</span></div>
+          </div>
+          <div class="metricCard">
+            <span class="metricLabel">Preprocess</span>
+            <div id="preprocessState" class="metricValue">--</div>
+          </div>
+          <div class="metricCard">
+            <span class="metricLabel">Tracking</span>
+            <div id="trackingState" class="metricValue">--</div>
+          </div>
+        </div>
+
+        <div class="contentGrid homeGrid">
+          <div class="panel">
+            <div class="head">
+              <div>
+                <div class="eyebrow">Live Monitor</div>
+                <div class="sectionTitle sectionWithIcon"><i data-lucide="camera"></i><span>Camera Feed</span></div>
+              </div>
+              <div id="fpsMeta" class="eyebrow">0.0 FPS</div>
+            </div>
+            <div class="body">
+              <div class="video" id="homeVideoStage">
+                <div id="homePlaceholder" class="placeholder">
+                  <div><strong>Camera feed is idle</strong>
+                    <div>Select a saved camera to load its stream and zone.</div>
+                  </div>
+                </div>
+                <img id="homeVideoFeed" alt="Live camera feed">
+              </div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="panel">
+              <div class="head">
+                <div>
+                  <div class="eyebrow">Detection State</div>
+                  <div class="sectionTitle sectionWithIcon"><i data-lucide="scan"></i><span>Tracked Objects</span></div>
+                </div>
+                <div id="homeCameraMeta" class="eyebrow">Cam --</div>
+              </div>
+              <div class="body">
+                <div id="detectionsList" class="list">
+                  <div class="empty">No detections yet.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="head">
+                <div>
+                  <div class="eyebrow">Event Log</div>
+                  <div class="sectionTitle sectionWithIcon"><i data-lucide="alert-triangle"></i><span>Entry / Exit
+                      Timeline</span></div>
+                </div>
+                <div id="alertsMeta" class="eyebrow">0 entries</div>
+              </div>
+              <div class="body">
+                <div class="controls" style="margin-bottom:14px">
+                  <button id="btnHomeClearAlerts" class="warn" type="button">Clear Logs</button>
+                </div>
+                <div id="alertsList" class="list">
+                  <div class="empty">No events logged yet.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="pageSavedCameras" class="pageView">
+        <div class="pageIntro">
+          <div>
+            <div class="eyebrow">Saved Cameras</div>
+            <h2 class="pageTitle">Manage Friendly Camera Profiles</h2>
+          </div>
+        </div>
+
+        <div class="savedPageHeader">
+          <div>
+            <div class="eyebrow">Library</div>
+            <div class="sectionTitle">Saved camera cards</div>
+          </div>
+          <button id="btnAddCamera" class="primary" type="button">Add Camera</button>
+        </div>
+
+        <div id="cameraBuilderNotice" class="notice ok" hidden>Camera saved successfully.</div>
+
+        <div id="savedCameraList" class="savedCards"></div>
+
+        <div id="cameraBuilder" hidden>
+          <div class="panel">
+            <div class="head">
+              <div>
+                <div class="eyebrow">Camera Source</div>
+                <div class="sectionTitle sectionWithIcon"><i data-lucide="settings"></i><span>Connect And Test A
+                    Source</span></div>
+              </div>
+            </div>
+            <div class="body">
+              <div class="fieldRow">
+                <div class="field">
+                  <label for="cameraSourceType">Source Type</label>
+                  <select id="cameraSourceType">
+                    <option value="ip">IP Camera / CCTV</option>
+                    <option value="mobile">Mobile Camera</option>
+                    <option value="local" hidden>Local Camera</option>
+                  </select>
+                </div>
+
+                <div id="localSourceGroup" class="field" hidden>
+                  <label for="cameraSelect">Local Camera</label>
+                  <select id="cameraSelect"></select>
+                </div>
+
+                <div id="ipSourceGroup" class="field">
+                  <label for="ipCameraUrl">Camera URL</label>
+                  <input id="ipCameraUrl" type="text"
+                    placeholder="rtsp://camera-address/stream or http://phone-or-camera/video">
+                </div>
+              </div>
+
+              <div id="localControls" class="controls" style="margin-top:14px" hidden>
+                <button id="btnRefreshCameras" type="button">Refresh Cameras</button>
+                <button id="btnTestCamera" type="button">Test Camera</button>
+                <button id="btnSwitchCamera" type="button">Switch Camera</button>
+                <button id="btnStart" class="primary" type="button">Start Camera</button>
+                <button id="btnStop" type="button">Stop Camera</button>
+              </div>
+
+              <div id="ipControls" class="controls" style="margin-top:14px">
+                <button id="btnTestCameraIp" type="button">Test Camera</button>
+                <button id="btnStartIp" class="primary" type="button">Start Camera</button>
+                <button id="btnStopIp" type="button">Stop Camera</button>
+                <button id="btnClearZone" class="warn" type="button">Clear Zone</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="contentGrid cameraGrid">
+            <div class="panel">
+              <div class="head">
+                <div>
+                  <div class="eyebrow">Live Feed</div>
+                  <div class="sectionTitle sectionWithIcon"><i data-lucide="camera"></i><span>Camera Preview</span></div>
+                </div>
+                <div id="cameraPageMeta" class="eyebrow">Awaiting camera selection</div>
+              </div>
+              <div class="body">
+                <div class="video" id="cameraVideoStage">
+                  <div id="cameraPlaceholder" class="placeholder">
+                    <div><strong>Camera preview is idle</strong>
+                      <div>Choose a source, test it, then start the pipeline.</div>
+                    </div>
+                  </div>
+                  <img id="cameraVideoFeed" alt="Camera preview">
+                  <canvas id="zoneCanvas"></canvas>
+                  <div id="drawHint" class="hint">Draw mode: left click to add points, R to reset, Esc to switch to
+                    polygon input.</div>
+                  <div id="errorNote" class="error"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="stack">
+              <div class="panel">
+                <div class="head">
+                  <div>
+                    <div class="eyebrow">Configuration</div>
+                    <div class="sectionTitle sectionWithIcon"><i data-lucide="settings"></i><span>Camera And Zone
+                        Setup</span></div>
+                  </div>
+                </div>
+                <div class="body">
+                  <div class="field">
+                    <label for="currentCameraName">Camera Name</label>
+                    <input id="currentCameraName" type="text" value="" placeholder="Entrance Camera">
+                  </div>
+                  <div class="field" style="margin-top:10px">
+                    <label for="zoneName">Zone Name</label>
+                    <input id="zoneName" type="text" placeholder="Lobby Zone">
+                  </div>
+                  <div class="field" style="margin-top:10px">
+                    <label for="zoneMode">Mode</label>
+                    <select id="zoneMode">
+                      <option value="draw">Draw Zone</option>
+                      <option value="manual">Polygon Input</option>
+                    </select>
+                  </div>
+                  <div class="field" style="margin-top:10px">
+                    <label for="zonePoints">Polygon Points</label>
+                    <textarea id="zonePoints" placeholder="[[100,100],[400,100],[400,320],[100,320]]"></textarea>
+                  </div>
+                  <div class="controls" style="margin-top:12px">
+                    <button id="btnCancelCameraSetup" type="button">Cancel</button>
+                    <button id="btnFinishDrawing" type="button">Finish Drawing</button>
+                    <button id="btnSetZone" class="primary" type="button" disabled>Save Camera</button>
+                  </div>
+                  <div id="zoneState" class="state" style="margin-top:12px">No zone configured for this camera.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="pageUploadVideo" class="pageView">
+        <div class="pageIntro">
+          <div>
+            <div class="eyebrow">Upload Video</div>
+            <h2 class="pageTitle">Analyze Recorded Video With A Fresh Zone</h2>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="head">
+            <div>
+              <div class="eyebrow">Video Analysis</div>
+              <div class="sectionTitle sectionWithIcon"><i data-lucide="upload"></i><span>Upload And Process</span></div>
+            </div>
+          </div>
+          <div class="body">
+            <div class="fieldRow">
+              <div class="field">
+                <label for="uploadVideoFile">Recorded Video</label>
+                <input id="uploadVideoFile" type="file" accept="video/*">
+              </div>
+              <div class="field">
+                <label for="uploadZoneName">Zone Name</label>
+                <input id="uploadZoneName" type="text" placeholder="Upload Zone">
+              </div>
+              <div class="field">
+                <label for="uploadZoneMode">Zone Input</label>
+                <select id="uploadZoneMode">
+                  <option value="draw">Draw Zone</option>
+                  <option value="manual">Polygon Input</option>
+                </select>
+              </div>
+            </div>
+            <div class="field" style="margin-top:14px">
+              <label for="uploadZonePoints">Polygon Points</label>
+              <textarea id="uploadZonePoints" placeholder="[[100,100],[400,100],[400,320],[100,320]]"></textarea>
+            </div>
+            <div class="controls" style="margin-top:14px">
+              <button id="btnUploadFinishDrawing" type="button">Finish Drawing</button>
+              <button id="btnAnalyzeVideo" class="primary" type="button">Analyze Video</button>
+              <button id="btnUploadClearAlerts" class="warn" type="button">Clear Logs</button>
+              <button id="btnUploadClearZone" class="warn" type="button">Clear Zone</button>
+            </div>
+            <div id="uploadVideoState" class="state" style="margin-top:12px">Upload a video, draw a fresh zone or paste polygon points, then analyze it.</div>
+          </div>
+        </div>
+
+        <div class="contentGrid homeGrid" style="margin-top:18px">
+          <div class="panel">
+            <div class="head">
+              <div>
+                <div class="eyebrow">Preview</div>
+                <div class="sectionTitle sectionWithIcon"><i data-lucide="film"></i><span>Preview And Zone</span></div>
+              </div>
+            </div>
+            <div class="body">
+              <div class="video" id="uploadPreviewStage">
+                <div id="uploadPreviewPlaceholder" class="placeholder">
+                  <div><strong>No upload processed yet</strong>
+                    <div>Choose a recorded video to extract a frame and draw a new zone.</div>
+                  </div>
+                </div>
+                <img id="uploadPreviewImage" alt="Processed upload preview">
+                <canvas id="uploadZoneCanvas"></canvas>
+                <div id="uploadZoneHint" class="hint">Draw mode: left click to add points, R to reset, Esc to switch to polygon input.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="panel">
+              <div class="head">
+                <div>
+                  <div class="eyebrow">Summary</div>
+                  <div class="sectionTitle sectionWithIcon"><i data-lucide="bar-chart-3"></i><span>Analysis Result</span></div>
+                </div>
+              </div>
+              <div class="body">
+                <div id="uploadSummary" class="list">
+                  <div class="empty">No video analyzed yet.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="head">
+                <div>
+                  <div class="eyebrow">Events</div>
+                  <div class="sectionTitle sectionWithIcon"><i data-lucide="list"></i><span>Detected Alerts</span></div>
+                </div>
+              </div>
+              <div class="body">
+                <div id="uploadAlerts" class="list">
+                  <div class="empty">No events yet.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="pageAccount" class="pageView">
+        <div class="pageIntro">
+          <div>
+            <div class="eyebrow">Account</div>
+            <h2 class="pageTitle">Authentication And Cloud Sync</h2>
+          </div>
+        </div>
+
+        <div class="accountGrid">
+          <div class="panel">
+            <div class="head">
+              <div>
+                <div class="eyebrow">User Info</div>
+                <div class="sectionTitle sectionWithIcon"><i data-lucide="user"></i><span>Authenticated Session</span>
+                </div>
+              </div>
+            </div>
+            <div class="body">
+              <div id="accountIdentity" class="state">Checking account...</div>
+              <div id="accountStatus" class="notice" style="margin-top:12px">Waiting for authentication...</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="head">
+              <div>
+                <div class="eyebrow">Google Drive</div>
+                <div class="sectionTitle sectionWithIcon"><i data-lucide="hard-drive"></i><span>Backup And
+                    Restore</span></div>
+              </div>
+            </div>
+            <div class="body">
+              <div id="driveState" class="state">Checking Google Drive...</div>
+              <div id="driveConnectGroup" class="controls" style="margin-top:12px" hidden>
+                <a id="btnConnectDrive" class="driveConnectLink" href="/auth/drive/connect">Connect to Drive</a>
+              </div>
+              <div id="driveSyncGroup" class="controls" style="margin-top:12px" hidden>
+                <button id="btnLoadSnapshot" type="button">Load Drive Data</button>
+                <button id="btnSaveSnapshot" class="primary" type="button">Save To Drive</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="head">
+              <div>
+                <div class="eyebrow">Session Actions</div>
+                <div class="sectionTitle sectionWithIcon"><i data-lucide="log-out"></i><span>Sign Out</span></div>
+              </div>
+            </div>
+            <div class="body">
+              <div class="state">Use this action to securely end the active dashboard session.</div>
+              <div class="controls" style="margin-top:12px">
+                <button id="btnSignOut" class="warn" type="button">Sign Out</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script type="module" src="./dashboard.js"></script>
+</body>
+
+</html>
