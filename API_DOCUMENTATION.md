@@ -516,23 +516,20 @@ Returns the full system status in one call. Useful for health checks and dashboa
 
 ## Design Principles
 
-### 1. Building is primary, documentation is mandatory
-The system is fully implemented and working before documentation was written. But documentation is treated as a first-class deliverable — not an afterthought. Every endpoint, module, and design decision is documented so any developer can understand, extend, or question the system confidently.
-
-### 2. One responsibility per module
+### 1. One responsibility per module
 Each module does exactly one thing — `detector.py` detects, `tracker.py` tracks, `geofence.py` checks zones, `alerts.py` manages events. No module crosses into another's responsibility. This makes the pipeline easy to swap or upgrade (e.g. replace YOLOv8 with a newer model without touching geofence logic).
 
-### 3. Alert on transition, not on every frame
+### 2. Alert on transition, not on every frame
 Alerts fire only when an object **changes** zone status (safe → alert or alert → safe). If an object stays outside the zone for 100 frames, only 1 alert is logged. This prevents flooding the event log and makes alerts meaningful.
 
-### 4. Cooldown per object per status
+### 3. Cooldown per object per status
 Each `(object_id, status)` pair has its own independent cooldown timer. This handles fast-moving objects gracefully without suppressing legitimate re-entry alerts from other objects.
 
-### 5. Per-camera zone memory
+### 4. Per-camera zone memory
 Each camera index stores its own active zone and preset zones independently. Switching cameras automatically restores the correct zone for that camera. Users never lose their zone configuration when switching sources.
 
-### 6. Stateless API, stateful pipeline
+### 5. Stateless API, stateful pipeline
 API endpoints are fully stateless — no sessions, no cookies. The camera pipeline runs as a background thread maintaining shared state via `camera_state`. This separation keeps the API clean and testable while the pipeline handles real-time processing.
 
-### 7. Preprocessing before detection
+### 6. Preprocessing before detection
 CLAHE enhancement is applied before YOLO inference to improve detection accuracy in low-light or low-contrast scenes. This is especially important for outdoor camera setups where lighting varies throughout the day.
