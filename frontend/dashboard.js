@@ -1134,13 +1134,17 @@ async function pollFrame() {
         hasFrame = true;
         const src = `data:image/jpeg;base64,${frame.frame}`;
         els.homeVideoFeed.src = src;
-        els.cameraVideoFeed.src = src;
         setFeedVisible(els.homeVideoFeed, els.homePlaceholder, true);
-        setFeedVisible(els.cameraVideoFeed, els.cameraPlaceholder, true);
+        if (!cameraBuilderDraftMode) {
+          els.cameraVideoFeed.src = src;
+          setFeedVisible(els.cameraVideoFeed, els.cameraPlaceholder, true);
+        }
       } else if (!hasFrame) {
         setPreviewState("connecting");
         setFeedVisible(els.homeVideoFeed, els.homePlaceholder, false);
-        setFeedVisible(els.cameraVideoFeed, els.cameraPlaceholder, false);
+        if (!cameraBuilderDraftMode) {
+          setFeedVisible(els.cameraVideoFeed, els.cameraPlaceholder, false);
+        }
       }
       els.fpsMeta.textContent = `${Number(frame.fps || 0).toFixed(1)} FPS`;
       renderDetections(frame.detections || []);
@@ -1164,6 +1168,7 @@ async function pollAlerts() {
 }
 
 async function startCamera() {
+  cameraBuilderDraftMode = false;
   const type = currentSourceType();
   const payload = { action: "start", source_type: type };
   if (type !== "local") {
@@ -1265,6 +1270,7 @@ async function clearAlerts(options = {}) {
 }
 
 async function switchCamera() {
+  cameraBuilderDraftMode = false;
   if (!isLocalSource()) {
     showError("Switching is currently enabled for local cameras only.");
     return;
@@ -1365,6 +1371,7 @@ function validateUrl(value) {
 }
 
 async function testCameraSource() {
+  cameraBuilderDraftMode = false;
   const type = currentSourceType();
   if (type === "local") {
     await refreshCameras();
@@ -2180,6 +2187,12 @@ try {
 
     try {
       await refreshSession();
+      await stopCamera().catch(() => {});
+      cameraConfigState = createEmptyCameraState();
+      setActiveSavedCamera("", { skipRemoteSync: true });
+      resetZoneEditor(savedCameraConfigs.length ? "Select a saved camera from the dropdown to load its zone." : "No zone configured for this camera.");
+      updateCameraIdentity({ camera_name: "", forceInput: true });
+      renderDetections([]);
     } catch (error) {
       setNotice(error.message, "err");
     }
@@ -2187,12 +2200,6 @@ try {
     if (!booted) {
       booted = true;
       await refreshCameras();
-      await refreshZone();
-      const lastSelectedCameraId = readStoredText(STORAGE_KEYS.lastSelectedCamera, "");
-      const lastSavedCamera = findSavedCameraById(lastSelectedCameraId);
-      if (lastSavedCamera) {
-        await switchToSavedCamera(lastSavedCamera, { startPreview: false });
-      }
       refreshStatus();
       pollFrame();
       pollAlerts();
@@ -2202,6 +2209,9 @@ try {
   showError(error.message);
   setNotice(error.message, "err");
 }
+
+
+
 
 
 
